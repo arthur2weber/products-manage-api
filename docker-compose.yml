@@ -7,8 +7,8 @@ services:
         uid: 1000
       context: ./
       dockerfile: ./.docker/php/Dockerfile
-    image: travellist
-    container_name: travellist-app
+    image: products-manage-api
+    container_name: products-manage-api
     restart: unless-stopped
     working_dir: /var/www/
     volumes:
@@ -31,7 +31,7 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: travellist-nginx
+    container_name: products-manage-nginx
     restart: unless-stopped
     ports:
       - 8000:80

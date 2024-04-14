@@ -22,6 +22,7 @@ class Controller extends RoutingController
             return Response(['error' => 'Register not found'], $errorCode);
 
         } catch (Exception $e) {
+            dd($e);
             Log::error('Controller error', [$method, $parameters, $e]);
 
             $errorCode = Response::HTTP_INTERNAL_SERVER_ERROR;

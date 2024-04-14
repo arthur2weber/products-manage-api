@@ -14,6 +14,6 @@ class ListProductController extends Controller
 
     public function __invoke()
     {
-        return Response($this->service->all());
+        return Response($this->service->allCached());
     }
 }

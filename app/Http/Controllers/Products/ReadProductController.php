@@ -14,6 +14,6 @@ class ReadProductController extends Controller
 
     public function __invoke(int $id)
     {
-        return Response($this->service->find($id));
+        return Response($this->service->findCached($id));
     }
 }

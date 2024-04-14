@@ -44,6 +44,10 @@ services:
   redis:
     container_name: products-manage-redis
     image: redis:6.2-alpine
+    environment:
+      REDIS_USERNAME: redis
+      REDIS_PASSWORD: redis
+    command: redis-server --requirepass "${REDIS_PASSWORD}" --appendonly yes
     networks:
       - products_manage_network
 

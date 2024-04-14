@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
-Route::prefix('product')->group(function () {
-    Route::post('/', CreateProductController::class);
-    Route::get('/{id}', ReadProductController::class);
-    Route::put('/{id}', UpdateProductController::class);
-    Route::delete('/{id}', DeleteProductController::class);
-    Route::get('/', ListProductController::class);
-});
-
+Route::prefix('product')->name('product.')
+    ->group(function () {
+        Route::post('/', CreateProductController::class)->name('create');
+        Route::get('/{id}', ReadProductController::class)->name('read');
+        Route::put('/{id}', UpdateProductController::class)->name('update');
+        Route::delete('/{id}', DeleteProductController::class)->name('delete');
+        Route::get('/', ListProductController::class)->name('list');
+    });
 
 
 

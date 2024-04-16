@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\ProductModel as Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Response;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -22,7 +21,7 @@ final class ProductsTest extends TestCase
                     'description' => 'Valid description',
                     'price' => 100.00,
                 ],
-                Response::HTTP_CREATED,
+                true,
             ],
             'empty_data' => [
                 [
@@ -30,64 +29,76 @@ final class ProductsTest extends TestCase
                     'description' => '',
                     'price' => 0.00,
                 ],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
+                false,
             ],
             'without_title' => [
                 [
                     'description' => 'Valid description',
                     'price' => 100.00,
                 ],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
+                false,
             ],
             'without_description' => [
                 [
                     'title' => 'Valid title',
                     'price' => 100.00,
                 ],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
+                false,
             ],
             'without_price' => [
                 [
                     'title' => 'Valid title',
                     'description' => 'Valid description',
                 ],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
+                false,
             ],
         ];
     }
 
     #[test]
     #[DataProvider('productDataProvider')]
-    public function itValidatesProductDataDuringCreation(array $data, int $expectedStatus): void
+    public function itValidatesProductDataDuringCreation(array $payload, bool $shouldBeSuccess): void
     {
-        $response = $this->postJson(route('product.create'), $data);
+        //act
+        $response = $this->postJson(route('product.create'), $payload);
 
-        $response->assertStatus($expectedStatus);
+        //ass
+        if ($shouldBeSuccess) {
+            $response->assertCreated();
+        }else {
+            $response->assertUnprocessable();
+        }
     }
 
     #[test]
     #[DataProvider('productDataProvider')]
-    public function itValidatesProductDataDuringUpdate(array $data, int $expectedStatus): void
+    public function itValidatesProductDataDuringUpdate(array $payload, bool $shouldBeSuccess): void
     {
+        //arr
         $product = Product::factory()->create();
 
-        $response = $this->putJson(route('product.update', $product->id), $data);
+        //act
+        $response = $this->putJson(route('product.update', $product->id), $payload);
 
-        if ($expectedStatus == Response::HTTP_CREATED) {
-            $expectedStatus = Response::HTTP_OK;
+        //ass
+        if ($shouldBeSuccess) {
+            $response->assertOk();
+        }else {
+            $response->assertUnprocessable();
         }
-
-        $response->assertStatus($expectedStatus);
     }
 
     #[test]
     public function itCanListAllProducts(): void
     {
+        //arr
         $numOfRegisters = 5;
         Product::factory()->count($numOfRegisters)->create();
 
+        //act
         $response = $this->getJson(route('product.list'));
 
+        //ass
         $response->assertSee(['id', 'title', 'description', 'price']);
         $response->assertOk()
             ->assertJsonCount($numOfRegisters);
@@ -96,10 +107,13 @@ final class ProductsTest extends TestCase
     #[test]
     public function itCanReadAProduct(): void
     {
+        //arr
         $product = Product::factory()->create();
 
+        //act
         $response = $this->getJson(route('product.read', $product->id));
 
+        //ass
         $response->assertSee(['id', 'title', 'description', 'price']);
         $response->assertOk();
     }
@@ -107,10 +121,13 @@ final class ProductsTest extends TestCase
     #[test]
     public function itCantReadAInexistentProduct(): void
     {
+        //arr
         $product = Product::factory()->create();
 
+        //act
         $response = $this->getJson(route('product.read', $product->id + 1));
 
+        //ass
         $response->assertSee(['error']);
         $response->assertUnprocessable();
     }
@@ -118,12 +135,16 @@ final class ProductsTest extends TestCase
     #[test]
     public function itCanDeleteAProduct(): void
     {
+        //arr
         $product = Product::factory()->create();
 
-        $response = $this->deleteJson(route('product.delete', $product));
+        //act
+        $response = $this->deleteJson(route('product.delete', $product->id));
 
+        //ass
         $response->assertOk();
         $this->assertSoftDeleted('products', ['id' => $product->id]);
         $response->assertSee(['id', 'title', 'description', 'price']);
     }
 }
+

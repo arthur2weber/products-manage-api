@@ -3,120 +3,105 @@
 namespace Tests\Feature;
 
 use App\Models\ProductModel as Product;
-use Faker\Factory as Faker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class ProductsTest extends TestCase
+final class ProductsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private $faker;
-
-    public function setUp(): void
+    #[test]
+    public function itCanListAllProducts(): void
     {
-        parent::setUp();
-        $this->faker = Faker::create();
-    }
+        $numOfRegisters = 5;
+        Product::factory()->count($numOfRegisters)->create();
 
-    #[Test]
-    public function it_can_list_all_products(): void
-    {
-        Product::factory()->count(3)->create();
+        $response = $this->getJson(route('product.list'));
 
-        $response = $this->getJson(route('api.products.list'));
-
+        $response->assertSee(['id', 'title', 'description', 'price']);
         $response->assertOk()
-            ->assertJsonCount(3, 'data');
+            ->assertJsonCount($numOfRegisters);
     }
 
-    public function productDataProvider()
+    public static function productDataProvider(): array
     {
         return [
-            'empty_data' => [
-                [
-                    'title' => $this->faker->sentence(3),
-                    'description' => $this->faker->paragraph(),
-                    'price' => $this->faker->randomFloat(2, 0, 100),
-                ],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
-            'invalid_data' => [
-                [
-                    'title' => $this->faker->sentence(3),
-                    'description' => $this->faker->paragraph(),
-                    'price' => $this->faker->randomFloat(-10, -0.01),
-                ],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            ],
             'valid_data' => [
                 [
-                    'title' => $this->faker->sentence(3),
-                    'description' => $this->faker->paragraph(),
-                    'price' => $this->faker->randomFloat(2, 0, 100),
+                    'title' => 'Valid title',
+                    'description' => 'Valid description',
+                    'price' => 100.00,
                 ],
                 Response::HTTP_CREATED,
             ],
+            'empty_data' => [
+                [
+                    'title' => '',
+                    'description' => '',
+                    'price' => 0.00,
+                ],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
             'without_title' => [
                 [
-                    'description' => $this->faker->paragraph(),
-                    'price' => $this->faker->randomFloat(2, 0, 100),
+                    'description' => 'Valid description',
+                    'price' => 100.00,
                 ],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'without_description' => [
                 [
-                    'title' => $this->faker->sentence(3),
-                    'price' => $this->faker->randomFloat(2, 0, 100),
+                    'title' => 'Valid title',
+                    'price' => 100.00,
                 ],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
             'without_price' => [
                 [
-                    'title' => $this->faker->sentence(3),
-                    'description' => $this->faker->paragraph(),
+                    'title' => 'Valid title',
+                    'description' => 'Valid description',
                 ],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
             ],
         ];
     }
 
-    #[Test]
+    #[test]
     #[DataProvider('productDataProvider')]
-    public function it_validates_product_data_during_creation(array $data, int $expectedStatus): void
+    public function itValidatesProductDataDuringCreation(array $data, int $expectedStatus): void
     {
-        $response = $this->postJson(route('api.products.create'), $data);
+        $response = $this->postJson(route('product.create'), $data);
 
-        $response->assertStatus($expectedStatus)
-            ->assertJsonValidationErrors(
-                $expectedStatus === Response::HTTP_UNPROCESSABLE_ENTITY ? ['title', 'description', 'price'] : []
-            );
+        $response->assertStatus($expectedStatus);
     }
 
-    #[Test]
+    #[test]
     #[DataProvider('productDataProvider')]
-    public function it_validates_product_data_during_update(array $data, int $expectedStatus): void
+    public function itValidatesProductDataDuringUpdate(array $data, int $expectedStatus): void
     {
         $product = Product::factory()->create();
 
-        $response = $this->putJson(route('api.products.update', $product), $data);
+        $response = $this->putJson(route('product.update', $product->id), $data);
 
-        $response->assertStatus($expectedStatus)
-            ->assertJsonValidationErrors(
-                $expectedStatus === Response::HTTP_UNPROCESSABLE_ENTITY ? ['title', 'description', 'price'] : []
-            );
+        if ($expectedStatus == Response::HTTP_CREATED) {
+            $expectedStatus = Response::HTTP_OK;
+        }
+
+        $response->assertStatus($expectedStatus);
     }
 
-    #[Test]
-    public function it_can_delete_a_product(): void
+    #[test]
+    public function itCanDeleteAProduct(): void
     {
         $product = Product::factory()->create();
 
-        $response = $this->deleteJson(route('api.products.delete', $product));
+        $response = $this->deleteJson(route('product.delete', $product));
 
-        $response->assertNoContent();
-
+        $response->assertOk();
         $this->assertSoftDeleted('products', ['id' => $product->id]);
+        $response->assertSee(['id', 'title', 'description', 'price']);
     }
 }

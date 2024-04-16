@@ -8,7 +8,6 @@ use App\Http\Controllers\Products\UpdateProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
 Route::prefix('product')->name('product.')
     ->group(function () {
         Route::post('/', CreateProductController::class)->name('create');
@@ -17,8 +16,6 @@ Route::prefix('product')->name('product.')
         Route::delete('/{id}', DeleteProductController::class)->name('delete');
         Route::get('/', ListProductController::class)->name('list');
     });
-
-
 
 Route::get('/user', function (Request $request) {
     return $request->user();

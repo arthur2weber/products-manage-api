@@ -29,7 +29,7 @@ class ProductService extends Service implements ProductServiceContract
         return cache()->remember(
             CacheKeysEnum::PRODUCTS_FIND_ID->valueWith([$id]),
             CacheTtlEnum::TTL_MAX->value,
-            fn () => $this->repository->find($id)
+            fn () => $this->repository->findOrFail($id)
         );
     }
 }

@@ -8,6 +8,8 @@ use App\Http\Controllers\Products\UpdateProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::pattern('id', '[0-9]+');
+
 Route::prefix('product')->name('product.')
     ->group(function () {
         Route::post('/', CreateProductController::class)->name('create');

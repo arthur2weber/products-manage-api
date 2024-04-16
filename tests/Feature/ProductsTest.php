@@ -13,19 +13,6 @@ final class ProductsTest extends TestCase
 {
     use RefreshDatabase;
 
-    #[test]
-    public function itCanListAllProducts(): void
-    {
-        $numOfRegisters = 5;
-        Product::factory()->count($numOfRegisters)->create();
-
-        $response = $this->getJson(route('product.list'));
-
-        $response->assertSee(['id', 'title', 'description', 'price']);
-        $response->assertOk()
-            ->assertJsonCount($numOfRegisters);
-    }
-
     public static function productDataProvider(): array
     {
         return [
@@ -91,6 +78,41 @@ final class ProductsTest extends TestCase
         }
 
         $response->assertStatus($expectedStatus);
+    }
+
+    #[test]
+    public function itCanListAllProducts(): void
+    {
+        $numOfRegisters = 5;
+        Product::factory()->count($numOfRegisters)->create();
+
+        $response = $this->getJson(route('product.list'));
+
+        $response->assertSee(['id', 'title', 'description', 'price']);
+        $response->assertOk()
+            ->assertJsonCount($numOfRegisters);
+    }
+
+    #[test]
+    public function itCanReadAProduct(): void
+    {
+        $product = Product::factory()->create();
+
+        $response = $this->getJson(route('product.read', $product->id));
+
+        $response->assertSee(['id', 'title', 'description', 'price']);
+        $response->assertOk();
+    }
+
+    #[test]
+    public function itCantReadAInexistentProduct(): void
+    {
+        $product = Product::factory()->create();
+
+        $response = $this->getJson(route('product.read', $product->id + 1));
+
+        $response->assertSee(['error']);
+        $response->assertUnprocessable();
     }
 
     #[test]

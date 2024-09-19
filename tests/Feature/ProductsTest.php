@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CacheKeysEnum;
 use App\Models\ProductModel as Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -89,6 +90,29 @@ final class ProductsTest extends TestCase
     }
 
     #[test]
+    public function itProductUpdateCleanCaches(): void
+    {
+        //arr
+        $product = Product::factory()->create();
+        $productNew = Product::factory()->make();
+
+        $cacheKeyRead = CacheKeysEnum::PRODUCTS_FIND_ID->valueWith([$product->id]);
+        $cacheKeyList = CacheKeysEnum::PRODUCTS_ALL->value;
+
+        //act
+        cache()->put($cacheKeyRead, 1);
+        cache()->put($cacheKeyList, 1);
+        
+        $this->putJson(route('product.update', $product->id), $productNew->toArray());
+        $cacheAfterRequest = cache()->get($cacheKeyRead);
+        $cacheAfterRequestList = cache()->get($cacheKeyList);
+
+        //ass
+        $this->assertNull($cacheAfterRequest);
+        $this->assertNull($cacheAfterRequestList);
+    }
+
+    #[test]
     public function itCanListAllProducts(): void
     {
         //arr
@@ -105,6 +129,26 @@ final class ProductsTest extends TestCase
     }
 
     #[test]
+    public function itCanListAllProductsFromCache(): void
+    {
+        //arr
+        $numOfRegisters = 5;
+        Product::factory()->count($numOfRegisters)->create();
+        $cacheKey = CacheKeysEnum::PRODUCTS_ALL->value;
+
+        //act
+        $cacheBeforeRequest = cache()->has($cacheKey);
+        $response = $this->getJson(route('product.list'));
+        $cacheAfterRequest = cache()->has($cacheKey);
+        $cachedData = cache()->get($cacheKey);
+
+        //ass
+        $this->assertFalse($cacheBeforeRequest);
+        $this->assertTrue($cacheAfterRequest);
+        $response->assertJson($cachedData);
+    }
+
+    #[test]
     public function itCanReadAProduct(): void
     {
         //arr
@@ -116,6 +160,25 @@ final class ProductsTest extends TestCase
         //ass
         $response->assertSee(['id', 'title', 'description', 'price']);
         $response->assertOk();
+    }
+
+    #[test]
+    public function itCanReadAProductFromCache(): void
+    {
+        //arr
+        $product = Product::factory()->create();
+        $cacheKey = CacheKeysEnum::PRODUCTS_FIND_ID->valueWith([$product->id]);
+
+        //act
+        $cacheBeforeRequest = cache()->has($cacheKey);
+        $response = $this->getJson(route('product.read', $product->id));
+        $cacheAfterRequest = cache()->has($cacheKey);
+        $cachedData = cache()->get($cacheKey);
+
+        //ass
+        $this->assertFalse($cacheBeforeRequest);
+        $this->assertTrue($cacheAfterRequest);
+        $response->assertJson($cachedData);
     }
 
     #[test]

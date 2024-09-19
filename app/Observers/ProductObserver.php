@@ -12,8 +12,8 @@ class ProductObserver
      */
     public function anyEvent(ProductModel $productModel)
     {
-        //Cache()->delete(CacheKeysEnum::PRODUCTS_FIND_ID->valueWith($productModel->id));
-        Cache()->delete(CacheKeysEnum::PRODUCTS_ALL->value);
+        cache()->forget(CacheKeysEnum::PRODUCTS_FIND_ID->valueWith([$productModel->id]));
+        cache()->forget(CacheKeysEnum::PRODUCTS_ALL->value);
     }
 
     /**
